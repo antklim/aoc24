@@ -24,6 +24,8 @@ func main() {
 		fmt.Println("failed to calculate distance:", err)
 		return
 	}
-
 	fmt.Println("distance between lists:", d)
+
+	similarity := Similarity(a, b)
+	fmt.Println("similarity score:", similarity)
 }
