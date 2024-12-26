@@ -37,6 +37,26 @@ func (r Report) IsSafe() bool {
 	return IsSafe(r.levels)
 }
 
+func (r Report) IsSafeWithDampener() bool {
+	for i := 0; i < len(r.levels); i++ {
+		var a []int
+		if i == 0 {
+			a = r.levels[1:]
+		} else if i == len(r.levels)-1 {
+			a = r.levels[:len(r.levels)-1]
+		} else {
+			a = append(a, r.levels[:i]...)
+			a = append(a, r.levels[i+1:]...)
+		}
+
+		if r := NewReport(a); r.IsSafe() {
+			return true
+		}
+	}
+
+	return false
+}
+
 func IsSafe(a []int) bool {
 	if len(a) < 2 {
 		return false

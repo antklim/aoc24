@@ -19,12 +19,23 @@ func main() {
 		return
 	}
 
-	safeReports := 0
+	safeReportsAmount := 0
+	var unsafeReports []Report
 	for _, report := range reports {
 		if report.IsSafe() {
-			safeReports++
+			safeReportsAmount++
+		} else {
+			unsafeReports = append(unsafeReports, report)
 		}
 	}
 
-	fmt.Println("safe reports amount:", safeReports)
+	fmt.Println("safe reports amount:", safeReportsAmount)
+
+	for _, report := range unsafeReports {
+		if report.IsSafeWithDampener() {
+			safeReportsAmount++
+		}
+	}
+
+	fmt.Println("safe reports amount with dampener:", safeReportsAmount)
 }

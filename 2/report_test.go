@@ -219,3 +219,61 @@ func TestReportIsSafe(t *testing.T) {
 		})
 	}
 }
+
+func TestReportIsSafeWithDampener(t *testing.T) {
+	testCases := []struct {
+		a    []int
+		want bool
+	}{
+		{
+			a:    []int{7, 6, 4, 2, 1},
+			want: true,
+		},
+		{
+			a:    []int{1, 2, 7, 8, 9},
+			want: false,
+		},
+		{
+			a:    []int{9, 7, 6, 2, 1},
+			want: false,
+		},
+		{
+			a:    []int{1, 3, 2, 4, 5},
+			want: true,
+		},
+		{
+			a:    []int{8, 6, 4, 4, 1},
+			want: true,
+		},
+		{
+			a:    []int{1, 3, 6, 7, 9},
+			want: true,
+		},
+		{
+			a:    []int{62, 61, 62, 63, 65, 67, 68, 71},
+			want: true,
+		},
+		{
+			a:    []int{1, 1, 2, 4, 5},
+			want: true,
+		},
+		{
+			a:    []int{1, 3, 4, 5, 5},
+			want: true,
+		},
+		{
+			a:    []int{60, 63, 65, 62, 63, 66, 69, 70},
+			want: false,
+		},
+	}
+
+	for i, tC := range testCases {
+		t.Run(fmt.Sprintf("#%d", i), func(t *testing.T) {
+			report := aoc.NewReport(tC.a)
+			got := report.IsSafeWithDampener()
+			if got != tC.want {
+				t.Errorf("expected report is safe to be %t, got: %t %v", tC.want, got, tC.a)
+			}
+		})
+	}
+}
