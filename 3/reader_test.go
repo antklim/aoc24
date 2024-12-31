@@ -1,8 +1,10 @@
 package main_test
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"testing"
 
@@ -50,5 +52,41 @@ func TestReadMul(t *testing.T) {
 				t.Fatalf("operations are not equal: %s", errs)
 			}
 		})
+	}
+}
+
+func TestNextOperation(t *testing.T) {
+	s := "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))"
+
+	buf := strings.NewReader(s)
+	reader := bufio.NewReader(buf)
+
+	want := []aoc.Operation{aoc.OperationMul, aoc.OperationDont, aoc.OperationMul, aoc.OperationMul, aoc.OperationMul, aoc.OperationDo, aoc.OperationMul}
+	var got []aoc.Operation
+
+	o, err := aoc.NextOperation(reader)
+	for err == nil {
+		got = append(got, o)
+		o, err = aoc.NextOperation(reader)
+	}
+	if !errors.Is(err, io.EOF) {
+		t.Fatal(err)
+	}
+
+	if lw, lg := len(want), len(got); lw != lg {
+		t.Logf("want operations: %v", want)
+		t.Logf("got operations: %v", got)
+		t.Fatalf("number of operations is not valid, want: %d, got %d", lw, lg)
+	}
+
+	var errs error
+	for i, w := range want {
+		if w != got[i] {
+			errs = errors.Join(errs, fmt.Errorf("operation #%d is not valid, want: %d, got: %d", i, w, got[i]))
+		}
+	}
+
+	if errs != nil {
+		t.Fatalf("operations are not equal: %s", errs)
 	}
 }

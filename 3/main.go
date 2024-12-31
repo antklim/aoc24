@@ -14,13 +14,12 @@ func main() {
 	}
 
 	operands, err := ReadMul(f)
-	//	operands, err := ParseInput(f)
 	if err != nil {
 		fmt.Println("failed to read input file:", err)
 		return
 	}
 
-	operations, err := ParseOperands(operands)
+	operations, _ := ParseOperands(operands)
 
 	result := 0
 	for _, o := range operations {
@@ -29,5 +28,4 @@ func main() {
 	}
 
 	fmt.Println("multiplication result:", result)
-	//fmt.Println("errors:", err)
 }
