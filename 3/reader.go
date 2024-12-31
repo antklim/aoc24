@@ -2,60 +2,114 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"unicode"
 )
+
+type Operation int
+
+const (
+	OperationUnknown Operation = iota - 1
+	OperationDo
+	OperationDont
+	OperationMul
+)
+
+var operations = []string{"do()", "don't()", "mul("}
+
+// NextOperation reads from the reader until the next operation found or reached the end of the reader.
+func NextOperation(r *bufio.Reader) (Operation, error) {
+	v := ""
+
+	c, _, err := r.ReadRune()
+	for err == nil {
+		v += string(c)
+
+		idx := findIdx(operations, func(s string) bool {
+			return v == s
+		})
+		if idx >= 0 {
+			return Operation(idx), nil
+		}
+
+		idx = findIdx(operations, func(s string) bool {
+			return strings.HasPrefix(s, v)
+		})
+		if idx == -1 {
+			v = ""
+		}
+
+		c, _, err = r.ReadRune()
+	}
+
+	return OperationUnknown, err
+}
 
 func ReadMul(r io.Reader) ([]string, error) {
 	reader := bufio.NewReader(r)
 
-	operation := ""
-	operands := ""
-
 	var result []string
+	do := true
 
-	c, _, err := reader.ReadRune()
+	o, err := NextOperation(reader)
 	for err == nil {
-		if operation == "" && c == 'm' {
-			operation = "m"
-		} else if operation == "m" {
-			if c == 'u' {
-				operation = "mu"
-			} else {
-				operation = ""
+		switch o {
+		case OperationDo:
+			do = true
+		case OperationDont:
+			do = false
+		case OperationMul:
+			if !do {
+				break
 			}
-		} else if operation == "mu" {
-			if c == 'l' {
-				operation = "mul"
-			} else {
-				operation = ""
+
+			operands, valid, done, err := readOperands(reader)
+			if err != nil {
+				return nil, err
 			}
-		} else if operation == "mul" {
-			if c == '(' {
-				operation = "mul("
-			} else {
-				operation = ""
-			}
-		} else if operation == "mul(" {
-			if unicode.IsDigit(c) || c == ',' {
-				operands += fmt.Sprintf("%c", c)
-			} else if c == ')' {
+			if valid && done {
 				result = append(result, operands)
-				operands = ""
-				operation = ""
-			} else {
-				operands = ""
-				operation = ""
 			}
+		default:
+			return nil, errors.New("unsupported operation")
 		}
 
-		c, _, err = reader.ReadRune()
+		o, err = NextOperation(reader)
 	}
 
-	if err == io.EOF {
-		err = nil
+	if !errors.Is(err, io.EOF) {
+		return nil, err
 	}
 
-	return result, err
+	return result, nil
+}
+
+func readOperands(r *bufio.Reader) (string /* valid */, bool /* done */, bool, error) {
+	operands := ""
+
+	c, _, err := r.ReadRune()
+	for err == nil {
+		if unicode.IsDigit(c) || c == ',' {
+			operands += fmt.Sprintf("%c", c)
+		} else if c == ')' {
+			return operands, true, true, nil
+		} else {
+			return "", false, true, nil
+		}
+		c, _, err = r.ReadRune()
+	}
+
+	return "", false, false, err
+}
+
+func findIdx(a []string, f func(string) bool) int {
+	for i, s := range a {
+		if f(s) {
+			return i
+		}
+	}
+	return -1
 }
